@@ -1,0 +1,9 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<div class="echarts-container"
+     style="width: 100%; position: relative; height: {{ .Height }};"
+     data-theme="{{ .Theme }}"
+     data-chart-options="{{ .Data }}">
+</div>
+{{ end }}

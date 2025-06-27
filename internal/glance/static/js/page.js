@@ -2,6 +2,7 @@ import { setupPopovers } from './popover.js';
 import { setupMasonries } from './masonry.js';
 import { throttledDebounce, isElementVisible, openURLInNewTab } from './utils.js';
 import { elem, find, findAll } from './templating.js';
+import * as echarts from 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.esm.min.js'
 
 async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
@@ -642,6 +643,28 @@ async function setupCalendars() {
         calendar.default(elems[i]);
 }
 
+async function setupECharts() {
+  const elems = document.getElementsByClassName("echarts-container");
+  if (elems.length === 0) return;
+
+  for (const elem of elems) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const chart = echarts.init(elem);
+        try {
+          const options = JSON.parse(elem.dataset.chartOptions);
+          chart.setOption(options);
+        } catch (e) {
+          console.error("Invalid ECharts options in dataset:", e);
+          return;
+        }
+        chart.resize();
+        window.addEventListener("resize", () => chart.resize());
+      });
+    });
+  }
+}
+
 async function setupTodos() {
     const elems = Array.from(document.getElementsByClassName("todo"));
     if (elems.length == 0) return;
@@ -756,6 +779,7 @@ async function setupPage() {
         setupPopovers();
         setupClocks()
         await setupCalendars();
+        await setupECharts();
         await setupTodos();
         setupCarousels();
         setupSearchBoxes();
