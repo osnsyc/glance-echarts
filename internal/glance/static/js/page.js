@@ -660,8 +660,8 @@ async function setupECharts() {
 
         if (width >= minWidth && height > 0) {
           observer.disconnect();
-
-          const chart = echarts.init(elem);
+          
+          const chart = echarts.init(elem, elem.dataset.theme ?? 'dark');
           try {
             const options = JSON.parse(elem.dataset.chartOptions);
             chart.setOption(options);
