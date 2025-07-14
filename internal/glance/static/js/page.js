@@ -649,40 +649,33 @@ async function setupECharts() {
   const echarts = await import('https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js');
 
   for (const elem of elems) {
-    let retries = 0;
-    const maxRetries = 10;
-    const minWidth = 260;
-    
-    const observer = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        const width = entry.contentRect.width;
-        const height = entry.contentRect.height;
+    const tryInitOrResizeChart = throttledDebounce(() => {
+      if (!isElementVisible(elem)) return;
 
-        if (width >= minWidth && height > 0) {
-          observer.disconnect();
-          
-          const chart = echarts.init(elem, elem.dataset.theme ?? 'dark');
-          try {
-            const options = JSON.parse(elem.dataset.chartOptions);
-            chart.setOption(options);
-          } catch (e) {
-            console.error("Invalid ECharts options in dataset:", e);
-            return;
-          }
+      if (!elem._echartInstance) {
+        elem._echartInstance = echarts.init(elem, elem.dataset.theme ?? 'dark');
 
-          chart.resize();
-          window.addEventListener("resize", () => chart.resize());
-        } else {
-          retries++;
-          if (retries > maxRetries) {
-            observer.disconnect();
-            console.warn("ECharts container still has insufficient width after retries:", elem);
-          }
+        try {
+          const options = JSON.parse(elem.dataset.chartOptions);
+          elem._echartInstance.setOption(options);
+        } catch (e) {
+          console.error("Invalid ECharts options in dataset:", e);
+          return;
         }
+
+        window.addEventListener("resize", () => {
+          elem._echartInstance?.resize();
+        });
+      } else {
+        elem._echartInstance.resize();
       }
+    }, 20, 200);
+
+    const observer = new ResizeObserver(() => {
+      tryInitOrResizeChart();
     });
 
-    observer.observe(elem);
+    afterContentReady(() => observer.observe(elem));
   }
 }
 
